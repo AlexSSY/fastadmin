@@ -1,0 +1,37 @@
+{% extends "admin.html" %}
+
+{% block main %}
+
+<!-- Блок для кнопок -->
+ <div class="my-2">
+  <a class="btn btn-primary" href="/crud/insert">Insert</a>
+ </div>
+
+<table class="table">
+
+  <!-- Собственно fields в голове таблицы -->
+  <thead>
+    {% for field in fields %}
+    <th>
+      {{ field }}
+    </th>
+    {% endfor %}
+  </thead>
+
+  <tbody>
+    {% if data %}
+    {% for item in data %}
+    <tr>
+      {% for val in item %}
+        <td>{{ val }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    {% else %}
+    <tr>
+      <td colspan="3"><p style="text-align: center;">Для данной модели нету записей в таблице</p></td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+{% endblock %}
