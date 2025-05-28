@@ -218,6 +218,16 @@ class Admin:
                         row.append(_val)
                 data.append(row)
 
+            def apply_custom_field_names(field):
+                custom_field_name_func = getattr(
+                    admin_model_class_instance, f"field_{field}_name", None)
+                if custom_field_name_func:
+                    return custom_field_name_func()
+                else:
+                    return field
+
+            fields = list(map(apply_custom_field_names, fields))
+
             context = {
                 "page_title": f"{sa_model_name} - index",
                 "sa_model_classes": self._registered,

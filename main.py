@@ -14,6 +14,12 @@ class UserAdmin(AdminModel):
     model = db.User
     fields = ['id', 'email', 'spagetti', 'email_and_id']
 
+    def field_id_name(self):
+        return "ИД записи"
+
+    def field_spagetti_name(self):
+        return "Спагетти"
+
     def spagetti(self, obj):
         return "Кастомное значение"
         
