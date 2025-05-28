@@ -3,14 +3,17 @@
 {% block main %}
 
 <!-- Блок для кнопок -->
- <div class="my-2">
+ <div class="mb-2">
   <a class="btn btn-primary" href="/crud/insert">Insert</a>
  </div>
 
-<table class="table">
+<table class="table table-striped table-hover">
 
   <!-- Собственно fields в голове таблицы -->
-  <thead>
+  <thead class="">
+    <th>
+      <input type="checkbox">
+    </th>
     {% for field in fields %}
     <th>
       {{ field }}
@@ -22,6 +25,9 @@
     {% if data %}
     {% for item in data %}
     <tr>
+      <td>
+        <input type="checkbox">
+      </td>
       {% for val in item %}
         <td>{{ val }}</td>
       {% endfor %}
@@ -36,4 +42,7 @@
     {% endif %}
   </tbody>
 </table>
+
+<!-- Вставляем пагинацию -->
+{% include "partials/_pagination.html" %}
 {% endblock %}

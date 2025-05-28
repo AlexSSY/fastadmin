@@ -9,6 +9,7 @@ from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
 from . import helpers
 from .validators import RequiredValidator, MaxLengthValidator, UniqueValidator
+from .depends import PaginationParams
 
 
 templates = Jinja2Templates(directory=os.path.join(
@@ -115,24 +116,6 @@ class Form:
             session.add(new_record)
             session.commit()
 
-class DisplayField:
-
-    def __init__(self, name, value, value_handler):
-        self._name = name
-        self._value = value
-        self._value_handler = value_handler
-
-    def __str__(self):
-        if self._value_handler:
-            return self._value_handler(self._value)
-        return self._value
-
-
-def field(func, name: str = None):
-    def wrapper(self, obj):
-        func(self, obj)
-    return wrapper
-
 
 class AdminModel:
     model: Any
@@ -198,12 +181,14 @@ class Admin:
             return templates.TemplateResponse(request, "login.html", context)
 
         @router.get("/{sa_model_name}/index")
-        def index(request: Request, sa_model_name: str):
+        def index(request: Request, sa_model_name: str, pagination: PaginationParams = Depends()):
             admin_model_class = self._registered[sa_model_name]
             admin_model_class_instance = admin_model_class()
             fields = admin_model_class.fields
             with self._session_local() as session:
-                records = session.query(admin_model_class.model).all()
+                records = session.query(admin_model_class.model).offset(
+                    pagination.offset).limit(pagination.limit).all()
+                total_items = session.query(admin_model_class.model).count()
             
             data = []
 
@@ -228,11 +213,22 @@ class Admin:
 
             fields = list(map(apply_custom_field_names, fields))
 
+            per_page = PaginationParams.per_page
+            total_pages = (total_items + per_page - 1) // per_page
+            start_page = max(1, pagination.page - 2)
+            end_page = min(total_pages, pagination.page + 2)
+
             context = {
                 "page_title": f"{sa_model_name} - index",
                 "sa_model_classes": self._registered,
                 "fields": fields,
-                "data": data
+                "data": data,
+                "page": pagination.page,
+                "per_page": PaginationParams.per_page,
+                "total": total_items,
+                "total_pages": total_pages,
+                "start_page": start_page,
+                "end_page": end_page
             }
             return templates.TemplateResponse(request, "index.html", context)
         
