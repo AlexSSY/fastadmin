@@ -140,12 +140,14 @@ class AdminModel:
         return [c.name for c in columns]
 
 
+SqlalchemyUserClass = object
+
+
 class Admin:
 
-    def __init__(self, app: FastAPI, engine: Engine, current_user_dependency: Callable = None):
+    def __init__(self, app: FastAPI, engine: Engine):
         self._app = app
         self._engine = engine
-        self._current_user_dependency = current_user_dependency
         self._registered = {}
         self._prefix = "/admin"
         self._session_local = sessionmaker(
@@ -158,12 +160,17 @@ class Admin:
 
     def provide_authentication_details(
         self,
-        sa_user_model,
-        login_field_name,
-        password_field_name,
-        password_verify_callback
+        sa_user_class: SqlalchemyUserClass,
+        login_field_name: str,
+        password_field_name: str,
+        password_verify_callback: Callable,
+        current_user_dependency: Callable = None
     ):
-        self._sa_user_model = sa_user_model
+        self.sa_user_class = sa_user_class
+        self._login_field_name = login_field_name
+        self._password_field_name = password_field_name
+        self.password_verify_callback = password_verify_callback
+        self._current_user_dependency = current_user_dependency
 
     def register_routes(self):
         router = APIRouter(prefix=self._prefix)

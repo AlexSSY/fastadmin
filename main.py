@@ -10,6 +10,8 @@ from admin import Admin, AdminModel
 app = FastAPI()
 admin = Admin(app, db.engine)
 
+admin.supply_get_user_depends()
+
 class UserAdmin(AdminModel):
     model = db.User
     fields = ['id', 'email', 'password_digest', 'spagetti', 'email_and_id']
