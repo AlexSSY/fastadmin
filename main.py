@@ -5,12 +5,28 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import db
 from admin import Admin, AdminModel
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
 
 
 app = FastAPI()
-admin = Admin(app, db.engine)
+admin = Admin(app, db.engine, os.getenv("SECRET_KEY"))
 
-admin.supply_get_user_depends()
+
+def verify_password(user, password):
+    pass
+
+
+admin.provide_authentication_details(
+    db.User,
+    "email",
+    "password_digest",
+    verify_password
+)
+
 
 class UserAdmin(AdminModel):
     model = db.User
@@ -48,4 +64,4 @@ def seed():
 if __name__ == "__main__":
     db.Base.metadata.create_all(bind=db.engine)
     # seed()
-    uvicorn.run("main:app", reload=False)
+    uvicorn.run("main:app", reload=True)

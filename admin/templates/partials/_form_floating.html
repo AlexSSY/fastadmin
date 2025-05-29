@@ -1,0 +1,14 @@
+<form action="{{ form.action }}" method="{{ form.method }}">
+  {% for field in form.fields %}
+  <div class="form-floating">
+    <input class="form-control" type="{{ field.type_ }}" name="{{ field.name }}" placeholder="{{ field.name }}">
+    <label for="{{ field.name }}">{{ field.name }}</label>
+  </div>
+  {% endfor %}
+  <div class="form-check text-start my-3">
+    <input class="form-check-input" type="checkbox" value="remember-me" id="checkDefault">
+    <label class="form-check-label" for="checkDefault">I am gay</label>
+  </div>
+  <input class="btn btn-primary w-100 py-2" type="submit" value="{{ form.submit_text }}">
+  <p class="mt-5 mb-3 text-body-secondary">© 2017–2025</p>
+</form>

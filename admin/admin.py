@@ -1,12 +1,14 @@
 import os
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from sqlalchemy import inspect, Integer, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy.sql.schema import Column
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, HTTPException, Form
 from fastapi.routing import APIRouter
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.sessions import SessionMiddleware
 from . import helpers
 from .validators import RequiredValidator, MaxLengthValidator, UniqueValidator
 from .depends import PaginationParams
@@ -20,22 +22,22 @@ templates.env.filters["render_input"] = helpers.render_input
 ###
 
 
-class Field:
+class FormField:
 
     def __init__(
         self,
-        sa_model_class: Any,
         name: str,
         type_: str = "string",
         required: bool = False,
         unique: bool = False,
         max: int = 0,
         readonly: bool = False,
-        validators: list = None
+        validators: list = None,
+        sa_model_class: Optional[Any] = None,
     ):
         self._sa_model_class = sa_model_class
         self.name = name
-        self._type = type_
+        self.type_ = type_
         self.required = required
         self. _unique = unique
         self._max = max
@@ -57,7 +59,7 @@ class Field:
         if sa_column.unique:
             validators.append(UniqueValidator(sa_model_class))
 
-        return Field(
+        return FormField(
             sa_model_class=sa_model_class,
             name=sa_column.name,
             type_="string",  # Упростим, допустим только строки пока
@@ -74,41 +76,82 @@ class Field:
         # TODO рекурсивно запустить валидаторы
         return errors
 
-    _valid_types = ["string", "integer"]
-
-    @property
-    def type_(self):
-        return self._type
-
-    @type_.setter
-    def type_(self, value: str) -> str:
-        _value = value.lower()
-        if _value not in Field._valid_types:
-            raise ValueError("Invalid type for field")
-        self._type = _value
-
-    def __str__(self):
-        return self.name
+    def get_context(self):
+        return {
+            "name": self.name,
+            "type_": self.type_
+        }
 
 
-class Form:
-    sa_model_class = None
+class FieldCollector(type):
+    def __new__(cls, name, bases, namespace):
+        # Собираем поля из базовых классов
+        collected = {}
+        for base in bases:
+            if hasattr(base, 'fields'):
+                collected.update(base.fields)
+
+        # Добавляем поля из текущего класса
+        collected.update({
+            key: value for key, value in namespace.items()
+            if not key.startswith("__") and not callable(value)
+        })
+
+        namespace['fields'] = collected
+        return super().__new__(cls, name, bases, namespace)
+
+
+class AdminForm(metaclass=FieldCollector):
+    class Meta:
+        sa_model_class = None
+        submit_text = "Submit"
+        template = "partials/_form.html"
 
     def __init__(self):
-        if not getattr(self, "sa_model_class", None):
-            raise ValueError("Form requires sa_model_class")
+        sa_model_class = self.get_sa_model_class()
 
-        # сгенерируем Fields
-        sa_model_class_columns = inspect(self.sa_model_class).columns
+        if sa_model_class:
+            sa_model_class_columns = inspect(sa_model_class).columns
 
-        self._fields = []
+            for sa_column in sa_model_class_columns:
+                sa_column_name = sa_column.name
+                
+                if sa_column_name in self.fields.keys:
+                    continue
 
-        for sa_column in sa_model_class_columns:
-            self._fields.append(Field.from_sa_column(
-                self.sa_model_class, sa_column))
+                self.fields[sa_column_name] = FormField.from_sa_column(
+                    self.sa_model_class, sa_column)
+
+    
+    def _get_meta(self, attr):
+        meta = getattr(self, 'Meta', None)
+        if meta:
+            return getattr(meta, attr, None)
+        return None
+
+    
+    def get_sa_model_class(self):
+        return self._get_meta('sa_model_class')
+
+    def get_submit_text(self):
+        return self._get_meta('submit_text')
+
 
     def validate(self, values, session_local):
         pass
+
+    def get_context(self, *, action, method="post"):
+        collected_fields_context = []
+
+        for form_field in self.fields.values():
+            collected_fields_context.append(form_field.get_context())
+
+        return {
+            "action": action,
+            "method": method,
+            "fields": collected_fields_context,
+            "submit_text": self.get_submit_text()
+        }
 
     def save(self, values, session_local):
         new_record = self.sa_model_class(**values)
@@ -125,7 +168,7 @@ class AdminModel:
             raise ValueError("ModelAdmin requires a 'model' attribute")
 
 
-        class StandardForm(Form):
+        class StandardForm(AdminForm):
             sa_model_class = self.model
 
         self.form = StandardForm()
@@ -145,13 +188,23 @@ SqlalchemyUserClass = object
 
 class Admin:
 
-    def __init__(self, app: FastAPI, engine: Engine):
+    def __init__(self, app: FastAPI, engine: Engine, secret_key: str):
         self._app = app
         self._engine = engine
+        self._secret_key = secret_key
         self._registered = {}
         self._prefix = "/admin"
         self._session_local = sessionmaker(
             bind=engine, autoflush=False, autocommit=False)
+        self._admin_app = FastAPI()
+        self._app.mount("/admin", self._admin_app)
+
+        async def admin_http_exception_handler(request: Request, exc: StarletteHTTPException):
+            if exc.status_code == 404:
+                return templates.TemplateResponse(
+                    "404.html", {"request": request, "detail": exc.detail}, status_code=404
+                )
+        self._admin_app.add_exception_handler(StarletteHTTPException, admin_http_exception_handler)
 
         self.register_routes()
 
@@ -163,20 +216,57 @@ class Admin:
         sa_user_class: SqlalchemyUserClass,
         login_field_name: str,
         password_field_name: str,
-        password_verify_callback: Callable,
-        current_user_dependency: Callable = None
+        password_verify_callback: Callable
     ):
         self.sa_user_class = sa_user_class
         self._login_field_name = login_field_name
         self._password_field_name = password_field_name
         self.password_verify_callback = password_verify_callback
-        self._current_user_dependency = current_user_dependency
+
+        self._admin_app.add_middleware(SessionMiddleware, secret_key=self._secret_key)
+
+        class SignUpForm(AdminForm):
+            username = FormField(name="username", type_="string")
+            password = FormField(name="password", type_="password")
+            password_confirmation = FormField(name="password_confirmation", type_="password")
+
+            class Meta:
+                submit_text = "Sign Up"
+                template = "partials/_form_floating.html"
+
+        self._signup_form_class = SignUpForm
+
+        @self._admin_app.get("/signup")
+        def sign_up(request: Request):
+            form = self._signup_form_class()
+            form_context = form.get_context(action=f"{self._prefix}/register")
+
+            return templates.TemplateResponse(
+                request,
+                "signup.html",
+                { "form": form_context }
+            )
+
+        @self._admin_app.post("/register")
+        def register(request: Request, username = Form(...), password = Form(...)):
+            return {login_field_name: username, password_field_name: password}
+
+    def get_model_admin_class(self, sa_model_name: str) -> AdminModel:
+        admin_model_class = self._registered.get(sa_model_name)
+        if admin_model_class is None:
+            raise HTTPException(status_code=404, detail=f"The {sa_model_name} not found")
+        return admin_model_class
 
     def register_routes(self):
-        router = APIRouter(prefix=self._prefix)
+        router = APIRouter()
+
+        def custom(request: Request):
+            return dir(request)
+
+        router.get("/custom")(custom)
 
         @router.get("/")
-        def dashboard(request: Request, current_user=Depends(self._current_user_dependency)):
+        def dashboard(request: Request):
             pass
 
         @router.get("/login")
@@ -189,9 +279,11 @@ class Admin:
 
         @router.get("/{sa_model_name}/index")
         def index(request: Request, sa_model_name: str, pagination: PaginationParams = Depends()):
-            admin_model_class = self._registered[sa_model_name]
+            admin_model_class = self.get_model_admin_class(sa_model_name)
+            
             admin_model_class_instance = admin_model_class()
             fields = admin_model_class.fields
+            
             with self._session_local() as session:
                 records = session.query(admin_model_class.model).offset(
                     pagination.offset).limit(pagination.limit).all()
@@ -228,6 +320,7 @@ class Admin:
             context = {
                 "page_title": f"{sa_model_name} - index",
                 "sa_model_classes": self._registered,
+                "sa_model_class_name": sa_model_name,
                 "fields": fields,
                 "data": data,
                 "page": pagination.page,
@@ -239,4 +332,4 @@ class Admin:
             }
             return templates.TemplateResponse(request, "index.html", context)
         
-        self._app.include_router(router)
+        self._admin_app.include_router(router)

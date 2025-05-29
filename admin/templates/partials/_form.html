@@ -1,0 +1,9 @@
+<form action="{{ form.action }}" method="{{ form.method }}">
+  {% for field in form.fields %}
+  <div class="form-group">
+    <label for="{{ field.name }}">{{ field.name }}</label>
+    <input class="form-control" type="{{ field.type_ }}" name="{{ field.name }}">
+  </div>
+  {% endfor %}
+  <input class="btn btn-primary" type="submit" value="{{ form.submit_text }}">
+</form>
