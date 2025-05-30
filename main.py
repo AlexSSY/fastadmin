@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 import db
-from admin import Admin, AdminModel
+from admin import admin, AdminModel
 from dotenv import load_dotenv
 import os
 
@@ -13,7 +13,7 @@ load_dotenv()
 
 
 app = FastAPI()
-admin = Admin(app, db.engine, os.getenv("SECRET_KEY"))
+admin.init(app, db.engine, os.getenv("SECRET_KEY"))
 
 
 def verify_password(user, password):

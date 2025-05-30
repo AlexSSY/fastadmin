@@ -1,4 +1,5 @@
 from fastapi import Query
+from .admin import admin
 
 
 class PaginationParams:
@@ -17,3 +18,11 @@ class PaginationParams:
     @property
     def page(self):
         return self._page
+
+
+async def get_db():
+    db = admin.session_local
+    try:
+        yield db
+    finally:
+        db.close()

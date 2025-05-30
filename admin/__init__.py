@@ -1,1 +1,2 @@
-from .admin import Admin, AdminModel
+from .admin import admin, AdminModel
+from . import routes
