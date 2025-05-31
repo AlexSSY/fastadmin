@@ -11,6 +11,9 @@ class ModelContextProcessor(ContextProcessor):
         context.update({ 'name': name })
 
         return context
+    
+    def get_list_context(self, objects):
+        ...
 
 
 class ModelRecordsContextProcessor:

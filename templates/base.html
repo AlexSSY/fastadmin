@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@tabler/core@1.3.2/dist/css/tabler.min.css" />
+  {% for html in head_hooks %}
+    {{ html | safe }}
+  {% endfor %}
+  <title>Document</title>
+</head>
+<body>
+  {% block body %}
+  {% endblock %}
+  <script
+    src="https://cdn.jsdelivr.net/npm/@tabler/core@1.3.2/dist/js/tabler.min.js">
+  </script>
+  {% for html in body_hooks %}
+    {{ html | safe }}
+  {% endfor %}
+</body>
+</html>

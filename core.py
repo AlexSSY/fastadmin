@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 from importlib import import_module
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
@@ -12,6 +13,13 @@ this = sys.modules[__name__]
 _fastapi_app = FastAPI()
 _templates = Jinja2Templates('templates')
 _engine = None
+
+
+_hooks = defaultdict(list)
+
+
+def register_html_hook(name, fn):
+    _hooks.setdefault(name, []).append(fn)
 
 
 def _load_models(models_list):
@@ -56,4 +64,12 @@ def get_context():
 
 @_fastapi_app.get('/')
 def dashboard(request: Request):
+
+    # я в dashboard endpoint мне ну-жен {model}_dashboard_ContextProcessor
     return _templates.TemplateResponse(request, "dashboard.html", get_context())
+
+
+@_fastapi_app.get('/{model}')
+def index(request: Request):
+    ...
+    # я в index endpoint мне нужны [index]

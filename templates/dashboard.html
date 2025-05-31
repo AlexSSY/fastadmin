@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
+{% extends 'admin.html' %}
+
+{% block main %}
   <h1>This is dashboard page</h1>
   <p>Registered models:</p>
   <ul>
@@ -13,5 +8,4 @@
     <li>{{ model.name }}</li>
     {% endfor %}
   </ul>
-</body>
-</html>
+{% endblock %}

@@ -17,3 +17,14 @@ class ContextProcessor(ABC):
     @abstractmethod
     def get_context(self, obj):
         ...
+
+    @abstractmethod
+    def get_list_context(self, objects):
+        ...
+
+
+class Partial:
+    template = None
+
+    def get_context(self):
+        ...

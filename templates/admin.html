@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="page">
+  {% include 'partials/_sidebar.html' %}
+  <div class="page-wrapper">
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <h2 class="page-title">Vertical layout</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="container-xl">
+        <div class="row row-deck row-cards">
+          <div class="col-sm-6 col-lg-3">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="row row-cards">
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-body" style="height: 10rem"></div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-body" style="height: 10rem"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-body" style="height: 10rem">
+                {% block main %}
+                {% endblock %}
+              </div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-md-12 col-lg-8">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-md-12 col-lg-8">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body" style="height: 10rem"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
