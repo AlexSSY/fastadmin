@@ -1,4 +1,5 @@
 import sys
+import os
 from collections import defaultdict
 from importlib import import_module
 from fastapi import FastAPI, Request
@@ -10,16 +11,19 @@ from models import ModelAdmin
 this = sys.modules[__name__]
 
 
+# Получаем путь к текущей директории (где находится этот файл)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Указываем путь к папке templates
+templates_dir = os.path.join(current_dir, "templates")
+
 _fastapi_app = FastAPI()
-_templates = Jinja2Templates('templates')
+_templates = Jinja2Templates(templates_dir)
 _engine = None
 
 
-_hooks = defaultdict(list)
-
-
-def register_html_hook(name, fn):
-    _hooks.setdefault(name, []).append(fn)
+def get_templating():
+    return _templates
 
 
 def _load_models(models_list):
@@ -33,6 +37,9 @@ def _load_models(models_list):
             if issubclass(class_, ModelAdmin):
                 registered_models[name] = class_
 
+    '''
+    { 'User': SqlalchemyModel }
+    '''
     setattr(this, '_registered_models', registered_models)
 
 
@@ -56,7 +63,7 @@ def get_context():
     # models
     models = []
     for model in get_registered_models().values():
-        _processor = import_module('context_processors').ModelContextProcessor()
+        _processor = import_module('admin.context_processors').ModelContextProcessor()
         models.append(_processor.get_context(model))
     context['registered_models'] = models
 
@@ -64,8 +71,6 @@ def get_context():
 
 @_fastapi_app.get('/')
 def dashboard(request: Request):
-
-    # я в dashboard endpoint мне ну-жен {model}_dashboard_ContextProcessor
     return _templates.TemplateResponse(request, "dashboard.html", get_context())
 
 

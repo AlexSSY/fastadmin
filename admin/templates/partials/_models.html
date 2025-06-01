@@ -1,0 +1,7 @@
+<h1>This is dashboard page</h1>
+<p>Registered models:</p>
+<ul>
+  {% for model in registered_models %}
+  <li>{{ model.name }}</li>
+  {% endfor %}
+</ul>

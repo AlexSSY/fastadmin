@@ -1,8 +1,9 @@
-from bases import ModelAdmin
+from admin.bases import ModelAdmin
 
 
 class User(ModelAdmin):
-    pass
+    class Meta:
+        sa_model = 'User'
 
 
 class Animal(ModelAdmin):

@@ -1,4 +1,4 @@
-from bases import ContextProcessor
+from .bases import ContextProcessor
 
 
 class ModelContextProcessor(ContextProcessor):

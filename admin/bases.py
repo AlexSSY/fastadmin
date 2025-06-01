@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from sqlalchemy.inspection import inspect
 
-import meta_classes
+from . import meta_classes
 
 # metaclass=meta_classes.ModelAdminMeta
-class ModelAdmin():
+class ModelAdmin:
     class Meta:
         pass
 

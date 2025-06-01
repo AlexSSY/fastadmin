@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI, Request
-import core
+from admin import core
 import db
 
 
@@ -9,7 +9,6 @@ app = FastAPI()
 settings = {
     'models': [
         'models',
-        'dashboard.models'
     ],
 }
 
@@ -22,4 +21,5 @@ async def home(request: Request):
 
 
 if __name__ == '__main__':
+    # db.Base.metadata.create_all(bind=db.engine)
     uvicorn.run("app:app", reload=True)
