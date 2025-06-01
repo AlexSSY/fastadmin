@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/@tabler/core@1.3.2/dist/css/tabler.min.css" />
-  {% for html in head_hooks %}
-    {{ html | safe }}
-  {% endfor %}
+  {{ render_injections("head") }}
   <title>Document</title>
 </head>
 <body>

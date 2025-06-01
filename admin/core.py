@@ -68,13 +68,3 @@ def get_context():
     context['registered_models'] = models
 
     return context
-
-@_fastapi_app.get('/')
-def dashboard(request: Request):
-    return _templates.TemplateResponse(request, "dashboard.html", get_context())
-
-
-@_fastapi_app.get('/{model}')
-def index(request: Request):
-    ...
-    # я в index endpoint мне нужны [index]

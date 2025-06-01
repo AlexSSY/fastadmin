@@ -1,4 +1,5 @@
 from . import core
+from markupsafe import Markup
 
 
 _registry = {}
@@ -29,26 +30,10 @@ def html_class_injection(name, priority=100, *args, **kwargs):
     return wrapper
 
 
-@html_injection('sidebar')
-def gunter():
-    return '<b>Gunter O. Dim</b>'
+def render_injections(slot_name, **context):
+    """Возвращает объединённый HTML, инжектированный в указанный слот."""
+    blocks = get_html_injections(slot_name, **context)
+    return Markup("\n".join(blocks))
 
 
-@html_class_injection('sidebar')
-class Olgierd:
-    def __call__(self, *args, **kwds):
-        return '<span>Olgierd von Everic</span>'
-
-
-@html_class_injection('sidebar')
-class SidebarUsers:
-    def __call__(self, *args, **kwargs):
-        return core.get_templating().get_template('partials/_models.html').render(**core.get_context())
-
-
-if __name__ == '__main__':
-    import datetime
-    for _ in range(10):
-        register_html_injection('sidebar', lambda: f'<div>{datetime.datetime.now()}</div>')
-
-    print(get_html_injections('sidebar'))
+core.get_templating().env.globals["render_injections"] = render_injections

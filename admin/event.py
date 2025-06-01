@@ -11,3 +11,10 @@ def emit( event_name, *args, **kwargs):
     
     for handler in _listeners.get(event_name, []):
         handler(*args, **kwargs)
+
+
+def event_decorator(event_name):
+    def wrapper(fn):
+        on(event_name, fn)
+        return fn
+    return wrapper
