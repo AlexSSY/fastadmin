@@ -5,7 +5,7 @@ def on(event_name, handler):
         _listeners.setdefault(event_name, []).append(handler)
 
 
-def emit( event_name, *args, **kwargs):
+def emit(event_name, *args, **kwargs):
     if event_name != "event_emitted":
         emit("event_emitted", name=event_name, args=args, kwargs=kwargs)
     

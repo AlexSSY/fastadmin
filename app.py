@@ -11,9 +11,7 @@ import db
 app = FastAPI()
 
 settings = {
-    'models': [
-        'models',
-    ],
+    'plugins': ['crud']
 }
 
 core.init(app, db.engine, settings)

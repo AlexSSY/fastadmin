@@ -7,4 +7,6 @@ class User(ModelAdmin):
 
 
 class Animal(ModelAdmin):
-    pass
+    class Meta:
+        sa_model = 'Animal'
+

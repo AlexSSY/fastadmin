@@ -1,4 +1,4 @@
-from . import core
+from . import event
 from markupsafe import Markup
 
 
@@ -36,4 +36,8 @@ def render_injections(slot_name, **context):
     return Markup("\n".join(blocks))
 
 
-core.get_templating().env.globals["render_injections"] = render_injections
+def set_env_to_templates(templates):
+    templates.env.globals["render_injections"] = render_injections
+
+
+event.on('templates_initialized', set_env_to_templates)

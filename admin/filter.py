@@ -1,5 +1,6 @@
-from . import core
+from . import event
 from markupsafe import Markup
+
 
 _filters = {}
 
@@ -32,4 +33,8 @@ def jinja_apply_filter(value, filter_name, *args, **kwargs):
     return apply_all_filters(filter_name, value, *args, **kwargs)
 
 
-core.get_templating().env.filters["apply_filters"] = jinja_apply_filter
+def set_env_to_templates(templates):
+    templates.env.filters["apply_filters"] = jinja_apply_filter
+
+
+event.on('templates_initialized', set_env_to_templates)
